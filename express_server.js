@@ -7,8 +7,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b2xVn2: "https://www.lighthouselabs.ca",
+  "9sm5xK": "https://www.google.com",
+  Qf0Ri3: "https://github.com",
+  Ar6Gy7: "https://developer.mozilla.org"
 };
 
 app.get("/", (req, res) => {
@@ -32,13 +34,42 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
+});
+
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect(`http://localhost:8080/urls`);
+});
+
+app.post("/urls/:shortURL", (req, res) => {
+  urlDatabase[req.params.shortURL] = req.body.longURL;
+  res.redirect(`http://localhost:8080/urls`);
+});
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+  delete urlDatabase[req.params.shortURL];
+  res.redirect(`http://localhost:8080/urls`);
 });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-function generateRandomString() {}
+function generateRandomString() {
+  let output = "";
+  let i = 6;
+  while (i) {
+    let arr = [
+      String.fromCharCode(Math.floor(Math.random() * 9 + 48)),
+      String.fromCharCode(Math.floor(Math.random() * 25 + 97)),
+      String.fromCharCode(Math.floor(Math.random() * 25 + 65))
+    ];
+    output += arr[Math.floor(Math.random() * 3)];
+    i--;
+  }
+  return output;
+}
