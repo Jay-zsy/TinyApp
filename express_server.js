@@ -13,9 +13,26 @@ const urlDatabase = {
   Qf0Ri3: "https://github.com",
   Ar6Gy7: "https://developer.mozilla.org"
 };
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+};
 
 app.get("/", (req, res) => {
   res.send("Hello! This is the default home page for our website");
+});
+
+app.get("/register", (req, res) => {
+  const templateVars = { username: req.cookies["username"] };
+  res.render("registration_page", templateVars);
 });
 
 app.get("/urls", (req, res) => {
@@ -68,6 +85,24 @@ app.post("/logout", (req, res) => {
   res.redirect(`http://localhost:8080/urls`);
 });
 
+app.post("/register", (req, res) => {
+  if (req.body.email === "" || req.body.password === "") {
+    res.status(400).send("None shall pass");
+  }
+  if (emailLookUp(req)) {
+    res.status(400).send("Email already exist");
+  }
+  const userID = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+  users[userID] = {
+    id: userID,
+    email: email,
+    password: password
+  };
+  res.redirect(`http://localhost:8080/urls`);
+});
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
@@ -85,4 +120,12 @@ function generateRandomString() {
     i--;
   }
   return output;
+}
+
+function emailLookUp(req) {
+  for (let el in users) {
+    if (users[el].email === req.body.email) {
+      return true;
+    }
+  }
 }
