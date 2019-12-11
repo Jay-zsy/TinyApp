@@ -3,26 +3,34 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const bcrypt = require("bcrypt");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  b2xVn2: "https://www.lighthouselabs.ca",
-  "9sm5xK": "https://www.google.com",
-  Qf0Ri3: "https://github.com",
-  Ar6Gy7: "https://developer.mozilla.org"
+  b2xVn2: { longURL: "https://www.lighthouselabs.ca", userID: "userRandomID" },
+  Gsm5xK: { longURL: "https://www.google.com", userID: "userRandomID" },
+  Qf0Ri3: { longURL: "https://github.com", userID: "user2RandomID" },
+  Ar6Gy7: { longURL: "https://developer.mozilla.org", userID: "user2RandomID" },
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: bcrypt.hashSync("purple-monkey-dinosaur", 10)
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: bcrypt.hashSync("dishwasher-funk", 10)
+  },
+  aJ48lW: {
+    id: "aJ48lW",
+    email: "hollowic@hotmail.com",
+    password: bcrypt.hashSync("123", 10)
   }
 };
 
@@ -37,19 +45,37 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  if (req.cookies.user_id === undefined) {
+    res.redirect("http://localhost:8080/login");
+    return;
+  }
   const templateVars = {
-    urls: urlDatabase,
+    urls: urlsForUser(req.cookies.user_id),
     username: users[req.cookies["user_id"]]
   };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
+  if (req.cookies.user_id === undefined) {
+    res.redirect("http://localhost:8080/login");
+    return;
+  }
   const templateVars = { username: users[req.cookies["user_id"]] };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  if (req.cookies.user_id === undefined) {
+    res.redirect("http://localhost:8080/login");
+    return;
+  }
+  if (urlsForUser(req.cookies.user_id)[req.params.shortURL] === undefined) {
+    res
+      .status(404)
+      .send("This short URL doesn't belong to you or it doesnt exist");
+    return;
+  }
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
@@ -59,30 +85,48 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  if (urlDatabase[req.params.shortURL] === undefined) {
+    res
+      .status(404)
+      .send("This short URL doesn't belong to you or it doesnt exist");
+    return;
+  }
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL] = {
+    longURL: req.body.longURL,
+    userID: req.cookies.user_id
+  };
   res.redirect(`http://localhost:8080/urls`);
 });
 
 app.post("/urls/:shortURL", (req, res) => {
-  urlDatabase[req.params.shortURL] = req.body.longURL;
-  res.redirect(`http://localhost:8080/urls`);
+  if (req.cookies.user_id === urlDatabase[req.params.shortURL].userID) {
+    urlDatabase[req.params.shortURL] = req.body.longURL;
+    res.redirect(`http://localhost:8080/urls`);
+  } else {
+    res.status(403).send("You're an idiot!");
+  }
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL];
-  res.redirect(`http://localhost:8080/urls`);
+  if (req.cookies.user_id === urlDatabase[req.params.shortURL].userID) {
+    delete urlDatabase[req.params.shortURL];
+    res.redirect(`http://localhost:8080/urls`);
+  } else {
+    res.status(403).send("You're an idiot!");
+  }
 });
 
 app.post("/login", (req, res) => {
   if (emailLookUp(req) && passwordLookUp(req)) {
     res.cookie("user_id", userIdLookUp(req));
     res.redirect(`http://localhost:8080/urls`);
+    return;
   }
   if (!emailLookUp(req)) {
     res.status(403).send("Email can not be found");
@@ -106,13 +150,14 @@ app.post("/register", (req, res) => {
   }
   const userID = generateRandomString();
   const email = req.body.email;
-  const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(req.body.password, 10);
   users[userID] = {
     id: userID,
     email: email,
-    password: password
+    password: hashedPassword
   };
   res.cookie("user_id", userID);
+  console.log(users);
   res.redirect(`http://localhost:8080/urls`);
 });
 
@@ -146,7 +191,7 @@ function emailLookUp(req) {
 
 function passwordLookUp(req) {
   for (let el in users) {
-    if (users[el].password === req.body.password) {
+    if (bcrypt.compareSync(req.body.password, users[el].password)) {
       return true;
     }
   }
@@ -157,9 +202,19 @@ function userIdLookUp(req) {
   for (let el in users) {
     if (
       users[el].email === req.body.email &&
-      users[el].password === req.body.password
+      bcrypt.compareSync(req.body.password, users[el].password)
     ) {
       return users[el].id;
     }
   }
+}
+
+function urlsForUser(id) {
+  let result = {};
+  for (let el in urlDatabase) {
+    if (urlDatabase[el].userID === id) {
+      result[el] = urlDatabase[el];
+    }
+  }
+  return result;
 }
