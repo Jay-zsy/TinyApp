@@ -3,10 +3,17 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
+// const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
 const bcrypt = require("bcrypt");
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(
+  cookieSession({
+    name: "session",
+    keys: ["omegalul"],
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  })
+);
 app.set("view engine", "ejs");
 //Helper functions as follows:
 //Function to generate random alphanumeric string, length 6
@@ -69,8 +76,10 @@ const urlDatabase = {
   Gsm5xK: { longURL: "https://www.google.com", userID: "userRandomID" },
   Qf0Ri3: { longURL: "https://github.com", userID: "user2RandomID" },
   Ar6Gy7: { longURL: "https://developer.mozilla.org", userID: "user2RandomID" },
-  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
+  b6UTxQ: { longURL: "https://developer.mozilla.org", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" },
+  y0Nocm: { longURL: "https://www.twitch.tv", userID: "aJ48lW" },
+  fglH5v: { longURL: "https://www.freecodecamp.org", userID: "aJ48lW" }
 };
 const users = {
   userRandomID: {
@@ -92,42 +101,42 @@ const users = {
 //GET routes
 //Login
 app.get("/login", (req, res) => {
-  const templateVars = { username: users[req.cookies["user_id"]] };
+  const templateVars = { username: users[req.session.user_id] };
   res.render("login_page", templateVars);
 });
 //Reg
 app.get("/register", (req, res) => {
-  const templateVars = { username: users[req.cookies["user_id"]] };
+  const templateVars = { username: users[req.session.user_id] };
   res.render("registration_page", templateVars);
 });
 //Index page
 app.get("/urls", (req, res) => {
-  if (req.cookies.user_id === undefined) {
+  if (req.session.user_id === undefined) {
     res.redirect("http://localhost:8080/login");
     return;
   }
   const templateVars = {
-    urls: urlsForUser(req.cookies.user_id),
-    username: users[req.cookies["user_id"]]
+    urls: urlsForUser(req.session.user_id),
+    username: users[req.session.user_id]
   };
   res.render("urls_index", templateVars);
 });
 //New page
 app.get("/urls/new", (req, res) => {
-  if (req.cookies.user_id === undefined) {
+  if (req.session.user_id === undefined) {
     res.redirect("http://localhost:8080/login");
     return;
   }
-  const templateVars = { username: users[req.cookies["user_id"]] };
+  const templateVars = { username: users[req.session.user_id] };
   res.render("urls_new", templateVars);
 });
 //ShortURL page
 app.get("/urls/:shortURL", (req, res) => {
-  if (req.cookies.user_id === undefined) {
+  if (req.session.user_id === undefined) {
     res.redirect("http://localhost:8080/login");
     return;
   }
-  if (urlsForUser(req.cookies.user_id)[req.params.shortURL] === undefined) {
+  if (urlsForUser(req.session.user_id)[req.params.shortURL] === undefined) {
     res
       .status(404)
       .send("This short URL doesn't belong to you or it doesnt exist");
@@ -136,7 +145,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    username: users[req.cookies["user_id"]]
+    username: users[req.session.user_id]
   };
   res.render("urls_show", templateVars);
 });
@@ -157,13 +166,13 @@ app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
-    userID: req.cookies.user_id
+    userID: req.session.user_id
   };
   res.redirect(`http://localhost:8080/urls`);
 });
 //Edit ShortURL method
 app.post("/urls/:shortURL", (req, res) => {
-  if (req.cookies.user_id === urlDatabase[req.params.shortURL].userID) {
+  if (req.session.user_id === urlDatabase[req.params.shortURL].userID) {
     urlDatabase[req.params.shortURL] = req.body.longURL;
     res.redirect(`http://localhost:8080/urls`);
   } else {
@@ -172,7 +181,7 @@ app.post("/urls/:shortURL", (req, res) => {
 });
 //Delete method
 app.post("/urls/:shortURL/delete", (req, res) => {
-  if (req.cookies.user_id === urlDatabase[req.params.shortURL].userID) {
+  if (req.session.user_id === urlDatabase[req.params.shortURL].userID) {
     delete urlDatabase[req.params.shortURL];
     res.redirect(`http://localhost:8080/urls`);
   } else {
@@ -182,7 +191,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 //Login page
 app.post("/login", (req, res) => {
   if (emailLookUp(req) && passwordLookUp(req)) {
-    res.cookie("user_id", userIdLookUp(req));
+    req.session.user_id = userIdLookUp(req);
     res.redirect(`http://localhost:8080/urls`);
     return;
   }
@@ -195,7 +204,7 @@ app.post("/login", (req, res) => {
 });
 //Logout method
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id", users[req.cookies["user_id"]]);
+  req.session.user_id = null;
   res.redirect(`http://localhost:8080/urls`);
 });
 //Reg
@@ -214,8 +223,7 @@ app.post("/register", (req, res) => {
     email: email,
     password: hashedPassword
   };
-  res.cookie("user_id", userID);
-  console.log(users);
+  req.session.user_id = userID;
   res.redirect(`http://localhost:8080/urls`);
 });
 //Listen @ port
