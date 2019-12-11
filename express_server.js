@@ -6,7 +6,14 @@ const bodyParser = require("body-parser");
 // const cookieParser = require("cookie-parser");
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcrypt");
-// const { getUserByEmail } = require("./helpers");
+const {
+  getUserByEmail,
+  generateRandomString,
+  getUserByPassword,
+  getUserById,
+  urlsForUser
+} = require("./helpers");
+const { urlDatabase, users } = require("./database");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cookieSession({
@@ -16,94 +23,16 @@ app.use(
   })
 );
 app.set("view engine", "ejs");
-//Helper functions as follows:
-//Function to generate random alphanumeric string, length 6
-function generateRandomString() {
-  let output = "";
-  let i = 6;
-  while (i) {
-    let arr = [
-      String.fromCharCode(Math.floor(Math.random() * 9 + 48)),
-      String.fromCharCode(Math.floor(Math.random() * 25 + 97)),
-      String.fromCharCode(Math.floor(Math.random() * 25 + 65))
-    ];
-    output += arr[Math.floor(Math.random() * 3)];
-    i--;
-  }
-  return output;
-}
-//Function to look up emails
-function emailLookUp(req) {
-  for (let el in users) {
-    if (users[el].email === req.body.email) {
-      return true;
-    }
-  }
-  return false;
-}
-//Function to look up hashed password
-function passwordLookUp(req) {
-  for (let el in users) {
-    if (bcrypt.compareSync(req.body.password, users[el].password)) {
-      return true;
-    }
-  }
-  return false;
-}
-//Function to return the proper user id based on email and password
-function userIdLookUp(req) {
-  for (let el in users) {
-    if (
-      users[el].email === req.body.email &&
-      bcrypt.compareSync(req.body.password, users[el].password)
-    ) {
-      return users[el].id;
-    }
-  }
-}
-//Function to filter out url specific to user id
-function urlsForUser(id) {
-  let result = {};
-  for (let el in urlDatabase) {
-    if (urlDatabase[el].userID === id) {
-      result[el] = urlDatabase[el];
-    }
-  }
-  return result;
-}
-//Fake "databases"
-const urlDatabase = {
-  b2xVn2: { longURL: "https://www.lighthouselabs.ca", userID: "userRandomID" },
-  Gsm5xK: { longURL: "https://www.google.com", userID: "userRandomID" },
-  Qf0Ri3: { longURL: "https://github.com", userID: "user2RandomID" },
-  Ar6Gy7: { longURL: "https://developer.mozilla.org", userID: "user2RandomID" },
-  b6UTxQ: { longURL: "https://developer.mozilla.org", userID: "aJ48lW" },
-  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" },
-  y0Nocm: { longURL: "https://www.twitch.tv", userID: "aJ48lW" },
-  fglH5v: { longURL: "https://www.freecodecamp.org", userID: "aJ48lW" }
-};
-const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: bcrypt.hashSync("purple-monkey-dinosaur", 10)
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: bcrypt.hashSync("dishwasher-funk", 10)
-  },
-  aJ48lW: {
-    id: "aJ48lW",
-    email: "hollowic@hotmail.com",
-    password: bcrypt.hashSync("123", 10)
-  }
-};
 //GET routes
 //Login
 app.get("/login", (req, res) => {
   const templateVars = { username: users[req.session.user_id] };
   res.render("login_page", templateVars);
+});
+//Logout
+app.get("/logout", (req, res) => {
+  req.session.user_id = null;
+  res.redirect(`http://localhost:8080/urls`);
 });
 //Reg
 app.get("/register", (req, res) => {
@@ -117,7 +46,7 @@ app.get("/urls", (req, res) => {
     return;
   }
   const templateVars = {
-    urls: urlsForUser(req.session.user_id),
+    urls: urlsForUser(req.session.user_id, urlDatabase),
     username: users[req.session.user_id]
   };
   res.render("urls_index", templateVars);
@@ -137,7 +66,10 @@ app.get("/urls/:shortURL", (req, res) => {
     res.redirect("http://localhost:8080/login");
     return;
   }
-  if (urlsForUser(req.session.user_id)[req.params.shortURL] === undefined) {
+  if (
+    urlsForUser(req.session.user_id, urlDatabase)[req.params.shortURL] ===
+    undefined
+  ) {
     res
       .status(404)
       .send("This short URL doesn't belong to you or it doesnt exist");
@@ -191,15 +123,21 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 //Login page
 app.post("/login", (req, res) => {
-  if (emailLookUp(req) && passwordLookUp(req)) {
-    req.session.user_id = userIdLookUp(req);
+  if (
+    getUserByEmail(req.body.email, users) &&
+    getUserByPassword(req.body.password, users)
+  ) {
+    req.session.user_id = getUserById(req, users);
     res.redirect(`http://localhost:8080/urls`);
     return;
   }
-  if (!emailLookUp(req)) {
+  if (!getUserByEmail(req.body.email, users)) {
     res.status(403).send("Email can not be found");
   }
-  if (emailLookUp(req) && !passwordLookUp(req)) {
+  if (
+    getUserByEmail(req.body.email, users) &&
+    !getUserByPassword(req.body.password, users)
+  ) {
     res.status(403).send("Wrong password");
   }
 });
@@ -213,7 +151,7 @@ app.post("/register", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
     res.status(400).send("None shall pass");
   }
-  if (emailLookUp(req)) {
+  if (getUserByEmail(req.body.email, users)) {
     res.status(400).send("Email already exist");
   }
   const userID = generateRandomString();

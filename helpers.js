@@ -1,37 +1,68 @@
-const urlDatabase = {
-  b2xVn2: { longURL: "https://www.lighthouselabs.ca", userID: "userRandomID" },
-  Gsm5xK: { longURL: "https://www.google.com", userID: "userRandomID" },
-  Qf0Ri3: { longURL: "https://github.com", userID: "user2RandomID" },
-  Ar6Gy7: { longURL: "https://developer.mozilla.org", userID: "user2RandomID" },
-  b6UTxQ: { longURL: "https://developer.mozilla.org", userID: "aJ48lW" },
-  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" },
-  y0Nocm: { longURL: "https://www.twitch.tv", userID: "aJ48lW" },
-  fglH5v: { longURL: "https://www.freecodecamp.org", userID: "aJ48lW" }
-};
-// const users = {
-//   userRandomID: {
-//     id: "userRandomID",
-//     email: "user@example.com",
-//     password: bcrypt.hashSync("purple-monkey-dinosaur", 10)
-//   },
-//   user2RandomID: {
-//     id: "user2RandomID",
-//     email: "user2@example.com",
-//     password: bcrypt.hashSync("dishwasher-funk", 10)
-//   },
-//   aJ48lW: {
-//     id: "aJ48lW",
-//     email: "hollowic@hotmail.com",
-//     password: bcrypt.hashSync("123", 10)
-//   }
-// };
-const getUserByEmail = function(email, database) {
-  for (el in database) {
-    if (database[el].email === email) {
-      return database[el].id;
+const bcrypt = require("bcrypt");
+
+//Function to look up user based emails
+const getUserByEmail = function(email, userDatabase) {
+  for (el in userDatabase) {
+    if (userDatabase[el].email === email) {
+      return userDatabase[el].id;
     }
   }
   return false;
 };
 
-module.exports = { getUserByEmail };
+//Function to generate random alphanumeric string, length 6
+function generateRandomString() {
+  let output = "";
+  let i = 6;
+  while (i) {
+    let arr = [
+      String.fromCharCode(Math.floor(Math.random() * 9 + 48)),
+      String.fromCharCode(Math.floor(Math.random() * 25 + 97)),
+      String.fromCharCode(Math.floor(Math.random() * 25 + 65))
+    ];
+    output += arr[Math.floor(Math.random() * 3)];
+    i--;
+  }
+  return output;
+}
+
+//Function to look up hashed password
+function getUserByPassword(password, userDatabase) {
+  for (let el in userDatabase) {
+    if (bcrypt.compareSync(password, userDatabase[el].password)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+//Function to return the proper user id based on email and password
+function getUserById(req, userDatabase) {
+  for (let el in userDatabase) {
+    if (
+      userDatabase[el].email === req.body.email &&
+      bcrypt.compareSync(req.body.password, userDatabase[el].password)
+    ) {
+      return userDatabase[el].id;
+    }
+  }
+  return false;
+}
+
+//Function to filter out url specific to user id
+function urlsForUser(id, urlDatabase) {
+  let result = {};
+  for (let el in urlDatabase) {
+    if (urlDatabase[el].userID === id) {
+      result[el] = urlDatabase[el];
+    }
+  }
+  return result;
+}
+module.exports = {
+  getUserByEmail,
+  generateRandomString,
+  getUserByPassword,
+  getUserById,
+  urlsForUser
+};
