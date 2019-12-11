@@ -26,22 +26,26 @@ const users = {
   }
 };
 
-app.get("/", (req, res) => {
-  res.send("Hello! This is the default home page for our website");
+app.get("/login", (req, res) => {
+  const templateVars = { username: users[req.cookies["user_id"]] };
+  res.render("login_page", templateVars);
 });
 
 app.get("/register", (req, res) => {
-  const templateVars = { username: req.cookies["username"] };
+  const templateVars = { username: users[req.cookies["user_id"]] };
   res.render("registration_page", templateVars);
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const templateVars = {
+    urls: urlDatabase,
+    username: users[req.cookies["user_id"]]
+  };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"] };
+  const templateVars = { username: users[req.cookies["user_id"]] };
   res.render("urls_new", templateVars);
 });
 
@@ -49,7 +53,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies["username"]
+    username: users[req.cookies["user_id"]]
   };
   res.render("urls_show", templateVars);
 });
@@ -76,12 +80,20 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
-  res.redirect(`http://localhost:8080/urls`);
+  if (emailLookUp(req) && passwordLookUp(req)) {
+    res.cookie("user_id", userIdLookUp(req));
+    res.redirect(`http://localhost:8080/urls`);
+  }
+  if (!emailLookUp(req)) {
+    res.status(403).send("Email can not be found");
+  }
+  if (emailLookUp(req) && !passwordLookUp(req)) {
+    res.status(403).send("Wrong password");
+  }
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username", req.body.username);
+  res.clearCookie("user_id", users[req.cookies["user_id"]]);
   res.redirect(`http://localhost:8080/urls`);
 });
 
@@ -100,6 +112,7 @@ app.post("/register", (req, res) => {
     email: email,
     password: password
   };
+  res.cookie("user_id", userID);
   res.redirect(`http://localhost:8080/urls`);
 });
 
@@ -126,6 +139,27 @@ function emailLookUp(req) {
   for (let el in users) {
     if (users[el].email === req.body.email) {
       return true;
+    }
+  }
+  return false;
+}
+
+function passwordLookUp(req) {
+  for (let el in users) {
+    if (users[el].password === req.body.password) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function userIdLookUp(req) {
+  for (let el in users) {
+    if (
+      users[el].email === req.body.email &&
+      users[el].password === req.body.password
+    ) {
+      return users[el].id;
     }
   }
 }
