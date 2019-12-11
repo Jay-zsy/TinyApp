@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 // const cookieParser = require("cookie-parser");
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcrypt");
+// const { getUserByEmail } = require("./helpers");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cookieSession({
