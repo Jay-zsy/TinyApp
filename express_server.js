@@ -1,3 +1,4 @@
+//Dependencies
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -7,7 +8,62 @@ const bcrypt = require("bcrypt");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.set("view engine", "ejs");
-
+//Helper functions as follows:
+//Function to generate random alphanumeric string, length 6
+function generateRandomString() {
+  let output = "";
+  let i = 6;
+  while (i) {
+    let arr = [
+      String.fromCharCode(Math.floor(Math.random() * 9 + 48)),
+      String.fromCharCode(Math.floor(Math.random() * 25 + 97)),
+      String.fromCharCode(Math.floor(Math.random() * 25 + 65))
+    ];
+    output += arr[Math.floor(Math.random() * 3)];
+    i--;
+  }
+  return output;
+}
+//Function to look up emails
+function emailLookUp(req) {
+  for (let el in users) {
+    if (users[el].email === req.body.email) {
+      return true;
+    }
+  }
+  return false;
+}
+//Function to look up hashed password
+function passwordLookUp(req) {
+  for (let el in users) {
+    if (bcrypt.compareSync(req.body.password, users[el].password)) {
+      return true;
+    }
+  }
+  return false;
+}
+//Function to return the proper user id based on email and password
+function userIdLookUp(req) {
+  for (let el in users) {
+    if (
+      users[el].email === req.body.email &&
+      bcrypt.compareSync(req.body.password, users[el].password)
+    ) {
+      return users[el].id;
+    }
+  }
+}
+//Function to filter out url specific to user id
+function urlsForUser(id) {
+  let result = {};
+  for (let el in urlDatabase) {
+    if (urlDatabase[el].userID === id) {
+      result[el] = urlDatabase[el];
+    }
+  }
+  return result;
+}
+//Fake "databases"
 const urlDatabase = {
   b2xVn2: { longURL: "https://www.lighthouselabs.ca", userID: "userRandomID" },
   Gsm5xK: { longURL: "https://www.google.com", userID: "userRandomID" },
@@ -33,17 +89,18 @@ const users = {
     password: bcrypt.hashSync("123", 10)
   }
 };
-
+//GET routes
+//Login
 app.get("/login", (req, res) => {
   const templateVars = { username: users[req.cookies["user_id"]] };
   res.render("login_page", templateVars);
 });
-
+//Reg
 app.get("/register", (req, res) => {
   const templateVars = { username: users[req.cookies["user_id"]] };
   res.render("registration_page", templateVars);
 });
-
+//Index page
 app.get("/urls", (req, res) => {
   if (req.cookies.user_id === undefined) {
     res.redirect("http://localhost:8080/login");
@@ -55,7 +112,7 @@ app.get("/urls", (req, res) => {
   };
   res.render("urls_index", templateVars);
 });
-
+//New page
 app.get("/urls/new", (req, res) => {
   if (req.cookies.user_id === undefined) {
     res.redirect("http://localhost:8080/login");
@@ -64,7 +121,7 @@ app.get("/urls/new", (req, res) => {
   const templateVars = { username: users[req.cookies["user_id"]] };
   res.render("urls_new", templateVars);
 });
-
+//ShortURL page
 app.get("/urls/:shortURL", (req, res) => {
   if (req.cookies.user_id === undefined) {
     res.redirect("http://localhost:8080/login");
@@ -83,7 +140,7 @@ app.get("/urls/:shortURL", (req, res) => {
   };
   res.render("urls_show", templateVars);
 });
-
+//Redirect
 app.get("/u/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL] === undefined) {
     res
@@ -94,7 +151,8 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
-
+//POST routes
+//Index page
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {
@@ -103,7 +161,7 @@ app.post("/urls", (req, res) => {
   };
   res.redirect(`http://localhost:8080/urls`);
 });
-
+//Edit ShortURL method
 app.post("/urls/:shortURL", (req, res) => {
   if (req.cookies.user_id === urlDatabase[req.params.shortURL].userID) {
     urlDatabase[req.params.shortURL] = req.body.longURL;
@@ -112,7 +170,7 @@ app.post("/urls/:shortURL", (req, res) => {
     res.status(403).send("You're an idiot!");
   }
 });
-
+//Delete method
 app.post("/urls/:shortURL/delete", (req, res) => {
   if (req.cookies.user_id === urlDatabase[req.params.shortURL].userID) {
     delete urlDatabase[req.params.shortURL];
@@ -121,7 +179,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     res.status(403).send("You're an idiot!");
   }
 });
-
+//Login page
 app.post("/login", (req, res) => {
   if (emailLookUp(req) && passwordLookUp(req)) {
     res.cookie("user_id", userIdLookUp(req));
@@ -135,12 +193,12 @@ app.post("/login", (req, res) => {
     res.status(403).send("Wrong password");
   }
 });
-
+//Logout method
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id", users[req.cookies["user_id"]]);
   res.redirect(`http://localhost:8080/urls`);
 });
-
+//Reg
 app.post("/register", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
     res.status(400).send("None shall pass");
@@ -160,61 +218,7 @@ app.post("/register", (req, res) => {
   console.log(users);
   res.redirect(`http://localhost:8080/urls`);
 });
-
+//Listen @ port
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
-function generateRandomString() {
-  let output = "";
-  let i = 6;
-  while (i) {
-    let arr = [
-      String.fromCharCode(Math.floor(Math.random() * 9 + 48)),
-      String.fromCharCode(Math.floor(Math.random() * 25 + 97)),
-      String.fromCharCode(Math.floor(Math.random() * 25 + 65))
-    ];
-    output += arr[Math.floor(Math.random() * 3)];
-    i--;
-  }
-  return output;
-}
-
-function emailLookUp(req) {
-  for (let el in users) {
-    if (users[el].email === req.body.email) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function passwordLookUp(req) {
-  for (let el in users) {
-    if (bcrypt.compareSync(req.body.password, users[el].password)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function userIdLookUp(req) {
-  for (let el in users) {
-    if (
-      users[el].email === req.body.email &&
-      bcrypt.compareSync(req.body.password, users[el].password)
-    ) {
-      return users[el].id;
-    }
-  }
-}
-
-function urlsForUser(id) {
-  let result = {};
-  for (let el in urlDatabase) {
-    if (urlDatabase[el].userID === id) {
-      result[el] = urlDatabase[el];
-    }
-  }
-  return result;
-}
