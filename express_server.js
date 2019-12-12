@@ -26,6 +26,23 @@ app.use(
 app.use(methodOverride("_method"));
 app.set("view engine", "ejs");
 
+//////
+const requestTime = function(req, res, next) {
+  req.requestTime = new Date(Date.now());
+  console.log(req.requestTime);
+  next();
+};
+
+const viewsLogger = function(req, res, next) {
+  req.session.views = (req.session.views || 0) + 1;
+  console.log(req.session.views);
+  next();
+};
+
+// app.use(viewsLogger);
+// app.use(requestTime);
+//////
+
 //GET routes
 //Login
 app.get("/login", (req, res) => {
@@ -35,7 +52,7 @@ app.get("/login", (req, res) => {
 //Logout
 app.get("/logout", (req, res) => {
   req.session.user_id = null;
-  res.redirect(`/urls`);
+  res.redirect("/urls");
 });
 //Reg
 app.get("/register", (req, res) => {
@@ -91,6 +108,8 @@ app.get("/urls/:shortURL", (req, res) => {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
     username: users[req.session.user_id],
+    visits: urlDatabase[req.params.shortURL].visits || 0,
+    uniqueVisits: urlDatabase[req.params.shortURL].uniqueVisits.length,
     error: null
   };
   res.render("urls_show", templateVars);
@@ -103,6 +122,17 @@ app.get("/u/:shortURL", (req, res) => {
       .render("404", { username: users[req.session.user_id], error: null });
     return;
   }
+  if (req.session.user_id === urlDatabase[req.params.shortURL].id) {
+    if (
+      !urlDatabase[req.params.shortURL].uniqueVisits.includes(
+        req.session.user_id
+      )
+    ) {
+      urlDatabase[req.params.shortURL].uniqueVisits.push(req.session.user_id);
+    }
+  }
+
+  urlDatabase[req.params.shortURL].visits += 1;
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
@@ -112,7 +142,9 @@ app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
-    userID: req.session.user_id
+    userID: req.session.user_id,
+    visits: 0,
+    uniqueVisits: []
   };
   res.redirect("/urls");
 });
@@ -131,7 +163,7 @@ app.post("/urls/:shortURL", (req, res) => {
 app.delete("/urls/:shortURL/delete", (req, res) => {
   if (req.session.user_id === urlDatabase[req.params.shortURL].userID) {
     delete urlDatabase[req.params.shortURL];
-    res.redirect(`/urls`);
+    res.redirect("/urls");
   } else {
     res
       .status(403)
@@ -145,7 +177,7 @@ app.post("/login", (req, res) => {
     getUserByPassword(req.body.password, users)
   ) {
     req.session.user_id = getUserById(req, users);
-    res.redirect(`/urls`);
+    res.redirect("/urls");
     return;
   }
   if (!getUserByEmail(req.body.email, users)) {
@@ -168,8 +200,8 @@ app.post("/login", (req, res) => {
 });
 //Logout method
 app.post("/logout", (req, res) => {
-  req.session.user_id = null;
-  res.redirect(`/urls`);
+  req.session = null;
+  res.redirect("/urls");
 });
 //Reg
 app.post("/register", (req, res) => {
@@ -196,7 +228,7 @@ app.post("/register", (req, res) => {
     password: hashedPassword
   };
   req.session.user_id = userID;
-  res.redirect(`/urls`);
+  res.redirect("/urls");
 });
 //Listen @ port
 app.listen(PORT, () => {
