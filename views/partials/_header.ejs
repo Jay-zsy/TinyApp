@@ -18,7 +18,9 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-    <% if(username) { %>
+    <% if(error) {%>
+    <p style="width: auto; margin: 1em"><%= error %></p>
+    <%}%> <% if(username) { %>
     <form class="form-inline" action="/logout" method="POST">
       <p style="width: auto; margin: 1em">
         Logged In As: <%= username.email %>
