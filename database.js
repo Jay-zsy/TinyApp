@@ -64,8 +64,13 @@ const users = {
   },
   aJ48lW: {
     id: "aJ48lW",
-    email: "hollowic@hotmail.com",
+    email: "foo@hotmail.com",
     password: bcrypt.hashSync("123", 10)
+  },
+  Bl4glW: {
+    id: "Bl4glW",
+    email: "bar@hotmail.com",
+    password: bcrypt.hashSync("asd", 10)
   }
 };
 

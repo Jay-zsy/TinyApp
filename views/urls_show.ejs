@@ -20,12 +20,12 @@
       <div class="card-body">
         <h5 class="card-title">TinyURL for: <%= longURL.longURL %></h5>
         <p class="card-text">
-          Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a>
+          Short URL: <a target="#blank" href="/u/<%= shortURL %>"><%= shortURL %></a>
         </p>
       </div>
       <div class="card-footer text-muted"></div>
       <div class="mx-auto">
-      <form class="form-inline" action="/urls/<%= shortURL %>" method="POST">
+      <form class="form-inline" action="/urls/<%= shortURL %>?_method=PUT" method="POST">
       <label for="longURL">Edit the URL:</label>
       <input
         class="form-control"
@@ -41,6 +41,7 @@
       </div>
       <label display="block" for="visits">Visits: <%= visits %></label>
       <label display="block" for="uniqueVisits">Unique Visits: <%= uniqueVisits %></label>
+      <label display="block" for="times">Time Stamp: <%= timeStamp %></label>
     <!-- Bootstrap JS -->
     <script
       src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

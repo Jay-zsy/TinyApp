@@ -34,7 +34,7 @@
         <tbody>
           <% for(let url in urls) { %>
           <tr>
-            <td><%= url %></td>
+            <td><a target="#blank" href=/u/<%= url %>><%= url %></a></td>
             <td><%= urls[url].longURL %></td>
             <td>
               <a class="btn btn-primary" href="/urls/<%= url %>">Edit</a>

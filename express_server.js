@@ -28,19 +28,12 @@ app.set("view engine", "ejs");
 
 //////
 const requestTime = function(req, res, next) {
-  req.requestTime = new Date(Date.now());
-  console.log(req.requestTime);
+  const timeStamp = new Date(Date.now());
+  req.session.timeStamp = timeStamp.toString();
   next();
 };
 
-const viewsLogger = function(req, res, next) {
-  req.session.views = (req.session.views || 0) + 1;
-  console.log(req.session.views);
-  next();
-};
-
-// app.use(viewsLogger);
-// app.use(requestTime);
+app.use("/u/:shortURL", requestTime);
 //////
 
 //GET routes
@@ -95,10 +88,10 @@ app.get("/urls/:shortURL", (req, res) => {
     res.redirect("/login");
     return;
   }
-  const thisUser = urlsForUser(req.session.user_id, urlDatabase)[
-    req.params.shortURL
-  ];
-  if (thisUser === undefined) {
+  if (
+    urlsForUser(req.session.user_id, urlDatabase)[req.params.shortURL] ===
+    undefined
+  ) {
     res
       .status(404)
       .render("404", { username: users[req.session.user_id], error: null });
@@ -110,6 +103,7 @@ app.get("/urls/:shortURL", (req, res) => {
     username: users[req.session.user_id],
     visits: urlDatabase[req.params.shortURL].visits || 0,
     uniqueVisits: urlDatabase[req.params.shortURL].uniqueVisits.length,
+    timeStamp: req.session.timeStamp || null,
     error: null
   };
   res.render("urls_show", templateVars);
@@ -122,7 +116,7 @@ app.get("/u/:shortURL", (req, res) => {
       .render("404", { username: users[req.session.user_id], error: null });
     return;
   }
-  if (req.session.user_id === urlDatabase[req.params.shortURL].id) {
+  if (req.session.user_id) {
     if (
       !urlDatabase[req.params.shortURL].uniqueVisits.includes(
         req.session.user_id
@@ -131,7 +125,6 @@ app.get("/u/:shortURL", (req, res) => {
       urlDatabase[req.params.shortURL].uniqueVisits.push(req.session.user_id);
     }
   }
-
   urlDatabase[req.params.shortURL].visits += 1;
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
@@ -149,7 +142,7 @@ app.post("/urls", (req, res) => {
   res.redirect("/urls");
 });
 //Edit ShortURL method
-app.post("/urls/:shortURL", (req, res) => {
+app.put("/urls/:shortURL", (req, res) => {
   if (req.session.user_id === urlDatabase[req.params.shortURL].userID) {
     urlDatabase[req.params.shortURL].longURL = req.body.longURL;
     res.redirect("/urls");

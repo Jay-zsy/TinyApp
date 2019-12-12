@@ -1,5 +1,8 @@
 <header>
-  <nav class="navbar navbar-expand-md navbar-dark bg-success">
+  <nav
+    style="height: 86px"
+    class="navbar navbar-expand-md navbar-dark bg-success"
+  >
     <a class="navbar-brand" href="/urls">TinyApp</a>
     <button
       class="navbar-toggler"
@@ -19,7 +22,14 @@
       </div>
     </div>
     <% if(error) {%>
-    <p style="width: auto; margin: 1em"><%= error %></p>
+    <p id="error" class="alert alert-dark" style="width: auto; margin: 1em">
+      <%= error %>
+      <script>
+        setTimeout(() => {
+          document.getElementById("error").remove();
+        }, 2500);
+      </script>
+    </p>
     <%}%> <% if(username) { %>
     <form class="form-inline" action="/logout" method="POST">
       <p style="width: auto; margin: 1em">
