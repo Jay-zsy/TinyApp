@@ -32,7 +32,6 @@ const requestTime = function(req, res, next) {
   req.session.timeStamp = timeStamp.toString();
   next();
 };
-
 app.use("/u/:shortURL", requestTime);
 //////
 
@@ -103,7 +102,7 @@ app.get("/urls/:shortURL", (req, res) => {
     username: users[req.session.user_id],
     visits: urlDatabase[req.params.shortURL].visits || 0,
     uniqueVisits: urlDatabase[req.params.shortURL].uniqueVisits.length,
-    timeStamp: req.session.timeStamp || null,
+    timeStamp: urlDatabase[req.params.shortURL].history || null,
     error: null
   };
   res.render("urls_show", templateVars);
@@ -126,6 +125,7 @@ app.get("/u/:shortURL", (req, res) => {
     }
   }
   urlDatabase[req.params.shortURL].visits += 1;
+  urlDatabase[req.params.shortURL].history = req.session.timeStamp;
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
@@ -137,7 +137,8 @@ app.post("/urls", (req, res) => {
     longURL: req.body.longURL,
     userID: req.session.user_id,
     visits: 0,
-    uniqueVisits: []
+    uniqueVisits: [],
+    history: null
   };
   res.redirect("/urls");
 });

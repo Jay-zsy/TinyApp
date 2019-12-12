@@ -18,37 +18,43 @@ const urlDatabase = {
     longURL: "https://github.com",
     userID: "user2RandomID",
     visits: 0,
-    uniqueVisits: []
+    uniqueVisits: [],
+    history: null
   },
   Ar6Gy7: {
     longURL: "https://www.npmjs.com",
     userID: "user2RandomID",
     visits: 0,
-    uniqueVisits: []
+    uniqueVisits: [],
+    history: null
   },
   b6UTxQ: {
     longURL: "https://developer.mozilla.org",
     userID: "aJ48lW",
     visits: 0,
-    uniqueVisits: []
+    uniqueVisits: [],
+    history: null
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
     userID: "aJ48lW",
     visits: 0,
-    uniqueVisits: []
+    uniqueVisits: [],
+    history: null
   },
   y0Nocm: {
     longURL: "https://www.twitch.tv",
     userID: "aJ48lW",
     visits: 0,
-    uniqueVisits: []
+    uniqueVisits: [],
+    history: null
   },
   fglH5v: {
     longURL: "https://www.freecodecamp.org",
     userID: "aJ48lW",
     visits: 0,
-    uniqueVisits: []
+    uniqueVisits: [],
+    history: null
   }
 };
 const users = {
