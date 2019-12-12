@@ -55,6 +55,41 @@ const urlDatabase = {
     visits: 0,
     uniqueVisits: [],
     history: null
+  },
+  X865ft: {
+    longURL: "https://instagram.com",
+    userID: "aJ48lW",
+    visits: 0,
+    uniqueVisits: [],
+    history: null
+  },
+  L1QoKQ: {
+    longURL: "https://youtube.com",
+    userID: "aJ48lW",
+    visits: 0,
+    uniqueVisits: [],
+    history: null
+  },
+  bkRgD5: {
+    longURL: "https://twitter.com",
+    userID: "aJ48lW",
+    visits: 0,
+    uniqueVisits: [],
+    history: null
+  },
+  N60v2F: {
+    longURL: "https://www.spotify.com",
+    userID: "aJ48lW",
+    visits: 0,
+    uniqueVisits: [],
+    history: null
+  },
+  Xwp350: {
+    longURL: "https://www.npmjs.com",
+    userID: "aJ48lW",
+    visits: 0,
+    uniqueVisits: [],
+    history: null
   }
 };
 const users = {
