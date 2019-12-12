@@ -1,11 +1,12 @@
 # TinyApp Project
 
 TinyApp is a full stack web application built with Node and Express that allows users to shorten long URLs (à la bit.ly).
+Time stamps, total visits and unique visits enabled.
 
 ## Final Product
 
-!["screenshot description"](#)
-!["screenshot description"](#)
+!["Index page"](https://github.com/hollowic/TinyApp/blob/master/ss/Screen%20Shot%202019-12-12%20at%209.43.06%20AM.png?raw=true)
+!["Login Page"](https://github.com/hollowic/TinyApp/blob/master/ss/Screen%20Shot%202019-12-12%20at%209.43.28%20AM.png?raw=true)
 
 ## Dependencies
 
@@ -15,6 +16,8 @@ TinyApp is a full stack web application built with Node and Express that allows 
 - bcrypt
 - body-parser
 - cookie-session
+- method-override
+- nodemon
 
 ## Getting Started
 
