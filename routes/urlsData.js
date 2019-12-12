@@ -1,17 +1,12 @@
-const app = require("express");
-const router = app.Router();
+const express = require("express");
+const router = express.Router();
 const { urlDatabase } = require("../database");
 const { generateRandomString, urlsForUser } = require("../helpers");
 //GET requests
 //Index page
 router.get("/", (req, res) => {
   if (req.session.user_id === undefined || req.session.user_id === null) {
-    const templateVars = {
-      urls: urlDatabase,
-      username: res.locals.user,
-      error: null
-    };
-    res.render("login_page", templateVars);
+    res.redirect("/login");
     return;
   }
   if (req.session.user_id !== undefined || req.session.user_id !== null) {

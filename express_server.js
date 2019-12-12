@@ -1,8 +1,8 @@
 //Dependencies
 const express = require("express");
 const app = express();
-const userRoute = require("./routes/usersData");
-const urlsRoute = require("./routes/urlsData");
+const userRoutes = require("./routes/usersData");
+const urlsRoutes = require("./routes/urlsData");
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 // const cookieParser = require("cookie-parser");
@@ -31,14 +31,13 @@ app.use("/u/:shortURL", requestTime);
 
 //Auth middleware
 app.use((req, res, next) => {
-  const user = users[req.session.user_id];
-  res.locals.user = user;
+  res.locals.user = users[req.session.user_id];
   next();
 });
 //////////////////
 
-app.use("/", userRoute);
-app.use("/urls", urlsRoute);
+app.use("/urls", urlsRoutes);
+app.use("/", userRoutes);
 
 //Redirect
 app.get("/u/:shortURL", (req, res) => {
