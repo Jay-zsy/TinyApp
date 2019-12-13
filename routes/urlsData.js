@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 const { urlDatabase } = require("../database");
 const { generateRandomString, urlsForUser } = require("../helpers");
-//GET requests
-//Index page
+//////////////////
+//GET Requests
+//Index Page
 router.get("/", (req, res) => {
   if (req.session.user_id === undefined || req.session.user_id === null) {
     res.redirect("/login");
@@ -19,7 +20,7 @@ router.get("/", (req, res) => {
     return;
   }
 });
-//New page
+//New Page
 router.get("/new", (req, res) => {
   if (req.session.user_id === undefined || req.session.user_id === null) {
     res.redirect("/login");
@@ -28,7 +29,7 @@ router.get("/new", (req, res) => {
   const templateVars = { username: res.locals.user, error: null };
   res.render("urls_new", templateVars);
 });
-//ShortURL page
+//ShortURL Page
 router.get("/:shortURL", (req, res) => {
   if (req.session.user_id === undefined) {
     res.redirect("/login");
@@ -52,9 +53,9 @@ router.get("/:shortURL", (req, res) => {
   };
   res.render("urls_show", templateVars);
 });
-
-//POST requests
-//Index page
+//////////////////
+//POST Requests
+//Index Page
 router.post("/", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {

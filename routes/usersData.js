@@ -8,8 +8,9 @@ const {
   getUserByPassword,
   getUserById
 } = require("../helpers");
-//GET requests
-//Login page
+//////////////////
+//GET Requests
+//Login Page
 router.get("/login", (req, res) => {
   if (req.session.user_id) {
     res.redirect("/urls");
@@ -18,12 +19,12 @@ router.get("/login", (req, res) => {
   const templateVars = { username: res.locals.user, error: null };
   res.render("login_page", templateVars);
 });
-//Logout page
+//Logout Page
 router.get("/logout", (req, res) => {
   req.session.user_id = null;
   res.redirect("/urls");
 });
-//Reg page
+//Reg Page
 router.get("/register", (req, res) => {
   if (req.session.user_id) {
     res.redirect("/urls");
@@ -32,9 +33,9 @@ router.get("/register", (req, res) => {
   const templateVars = { username: res.locals.user, error: null };
   res.render("registration_page", templateVars);
 });
-
-//POST requests
-//Login method
+//////////////////
+//POST Requests
+//Login Method
 router.post("/login", (req, res) => {
   if (
     getUserByEmail(req.body.email, users) &&
@@ -62,12 +63,12 @@ router.post("/login", (req, res) => {
     return;
   }
 });
-//Logout method
+//Logout Method
 router.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/urls");
 });
-//Reg method
+//Reg Method
 router.post("/register", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
     res.status(400).render("registration_page", {
