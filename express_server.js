@@ -28,17 +28,17 @@ const requestTime = function(req, res, next) {
   next();
 };
 app.use("/u/:shortURL", requestTime);
-
+//////////////////
 //Auth middleware
 app.use((req, res, next) => {
   res.locals.user = users[req.session.user_id];
   next();
 });
 //////////////////
-
+//Routes
 app.use("/urls", urlsRoutes);
 app.use("/", userRoutes);
-
+//////////////////
 //Redirect
 app.get("/u/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL] === undefined) {
@@ -59,7 +59,8 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
-//Edit ShortURL method
+//////////////////
+//Edit ShortURL Method
 app.put("/urls/:shortURL", (req, res) => {
   if (req.session.user_id === urlDatabase[req.params.shortURL].userID) {
     urlDatabase[req.params.shortURL].longURL = req.body.longURL;
@@ -68,7 +69,8 @@ app.put("/urls/:shortURL", (req, res) => {
     res.status(403).render("403", { username: res.locals.user, error: null });
   }
 });
-//Delete method
+//////////////////
+//Delete ShortURL Method
 app.delete("/urls/:shortURL/delete", (req, res) => {
   if (req.session.user_id === urlDatabase[req.params.shortURL].userID) {
     delete urlDatabase[req.params.shortURL];
@@ -77,6 +79,7 @@ app.delete("/urls/:shortURL/delete", (req, res) => {
     res.status(403).render("403", { username: res.locals.user, error: null });
   }
 });
+//////////////////
 //Listen @ port
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
