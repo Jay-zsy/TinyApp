@@ -10,8 +10,8 @@ Examples of Express routes
 
 ## Final Product
 
-[Index page](https://github.com/hollowic/TinyApp/blob/master/ss/Screen%20Shot%202019-12-12%20at%209.43.06%20AM.png?raw=true)
-[Login Page](https://github.com/hollowic/TinyApp/blob/master/ss/Screen%20Shot%202019-12-12%20at%209.43.28%20AM.png?raw=true)
+!["Index page"](https://github.com/hollowic/TinyApp/blob/master/ss/Screen%20Shot%202019-12-12%20at%209.43.06%20AM.png?raw=true)
+!["Login Page"](https://github.com/hollowic/TinyApp/blob/master/ss/Screen%20Shot%202019-12-12%20at%209.43.28%20AM.png?raw=true)
 
 ## Dependencies
 
