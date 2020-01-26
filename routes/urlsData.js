@@ -6,7 +6,7 @@ const { generateRandomString, urlsForUser } = require("../helpers");
 //GET Requests
 //Index Page
 router.get("/", (req, res) => {
-  if (req.session.user_id === undefined || req.session.user_id === null) {
+  if (!req.session.user_id) {
     res.redirect("/login");
     return;
   }
@@ -22,7 +22,7 @@ router.get("/", (req, res) => {
 });
 //New Page
 router.get("/new", (req, res) => {
-  if (req.session.user_id === undefined || req.session.user_id === null) {
+  if (!req.session.user_id) {
     res.redirect("/login");
     return;
   }
@@ -44,7 +44,7 @@ router.get("/:shortURL", (req, res) => {
   }
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
+    longURL: urlDatabase[req.params.shortURL].longURL,
     username: res.locals.user,
     visits: urlDatabase[req.params.shortURL].visits || 0,
     uniqueVisits: urlDatabase[req.params.shortURL].uniqueVisits.length,

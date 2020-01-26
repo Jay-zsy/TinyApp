@@ -6,13 +6,15 @@ const urlDatabase = {
     longURL: "https://www.lighthouselabs.ca",
     userID: "userRandomID",
     visits: 0,
-    uniqueVisits: []
+    uniqueVisits: [],
+    history: null
   },
   Gsm5xK: {
     longURL: "https://www.google.com",
     userID: "userRandomID",
     visits: 0,
-    uniqueVisits: []
+    uniqueVisits: [],
+    history: null
   },
   Qf0Ri3: {
     longURL: "https://github.com",
